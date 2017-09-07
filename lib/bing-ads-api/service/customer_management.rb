@@ -17,8 +17,8 @@ module BingAdsApi
 	#    :account_id => "9876543" }
 	#  service = BingAdsApi::CustomerManagement.new(options)
 	class CustomerManagement < BingAdsApi::Service
-		
-		
+
+
 		# Public : Constructor 
 		# 
 		# Author:: jlopezn@neonline.cl 

@@ -1,4 +1,4 @@
-# -*- encoding : utf-8 -*-
+ # -*- encoding : utf-8 -*-
 require 'spec_helper'
 
 # Author:: jlopezn@neonline.cl
@@ -20,6 +20,48 @@ describe BingAdsApi::CampaignManagement do
 		new_service = BingAdsApi::CampaignManagement.new(default_options)
 		expect(new_service).not_to be_nil
 	end
+    
+  describe "targets operations" do
+
+    it "should add city target" do
+      target = BingAdsApi::Target.new(
+        location: BingAdsApi::LocationTarget.new(
+          city_target: BingAdsApi::CityTarget.new(
+            bids: [
+              city_target_bid: BingAdsApi::CityTargetBid.new(
+                                bid_adjustment: 0,
+                                city: 'Sydney, NS AU',
+                                is_excluded: false
+                              )]
+          )
+        )
+      )
+      response = service.add_targets_to_library(default_options[:account_id], target)
+      expect(response[:target_ids][:long]).not_to be_nil
+    end
+
+    it "should add radius target" do
+      target = BingAdsApi::Target.new(
+        location: BingAdsApi::LocationTarget.new(
+          radius_target: BingAdsApi::RadiusTarget.new(
+            bids: [
+              radius_target_bid: BingAdsApi::RadiusTargetBid.new(
+                                bid_adjustment:    0,
+                                id:                nil,
+                                is_excluded: false,
+                                latitude_degrees:  35.575156,
+                                longitude_degrees: -77.398931,
+                                radius:            20,
+                                radius_unit: BingAdsApi::DistanceUnits::MILES
+            )]
+          )
+        )
+      )
+      response = service.add_targets_to_library(default_options[:account_id], target)
+      expect(response[:target_ids][:long]).not_to be_nil
+    end
+
+  end
 
 	describe "campaign operations" do
 
@@ -186,6 +228,28 @@ describe BingAdsApi::CampaignManagement do
 			campaign_id = BingAdsFactory.create_campaign
 			@ad_group_id = BingAdsFactory.create_ad_group(campaign_id)
 		end
+    
+    describe "expanded text ads" do
+
+			it "should add a single ad" do
+
+        text_ad = BingAdsApi::ExpandedTextAd.new(
+          final_urls: {'ins1:string'=> 'http://test.com'},
+          status: BingAdsApi::Ad::ACTIVE,
+          text: 'Expanded Text Ad',
+          title_part_1: 'Expanded Title',
+          title_part_2: 'Expanded Title 2',
+          path_1: 'test',
+          path_2: 'test'
+				)
+
+				response = service.add_ads(@ad_group_id, text_ad)
+				expect(response).not_to be_nil
+				expect(response[:partial_errors]).to be_nil
+				expect(response[:ad_ids][:long]).not_to be_nil
+			end
+    end
+
 
 		describe "text ads" do
 

@@ -20,13 +20,13 @@ RSpec.configure do |config|
 
   config.after(:all) do
     # Clean up everything
-    account_id = "8506945"
+    account_id = "242492622"
     service = BingAdsApi::CampaignManagement.new(
       environment: :sandbox,
-      username: "ruby_bing_ads_sbx",
-      password: "sandbox123",
+      username: "dmitriiwebstreak1",
+      password: "webstreak123",
       developer_token: "BBD37VB98",
-      customer_id: "21025739",
+      customer_id: "254553215",
       account_id: account_id
     )
     campaign_ids = service.get_campaigns_by_account_id(account_id).map(&:id)

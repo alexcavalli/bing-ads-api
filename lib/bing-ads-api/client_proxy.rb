@@ -99,7 +99,7 @@ module BingAdsApi
 		# Returns:: Response from the Savon::Client
 		# Raises:: Savon::SOAPFault Savon::HTTPError Savon::InvalidResponseError
 		def call(service_name, message, options={})
-			self.service.call(service_name, message)
+		  self.service.call(service_name, message)
 		end
 
 

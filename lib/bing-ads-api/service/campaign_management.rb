@@ -44,6 +44,93 @@ module BingAdsApi
 		## Operations Wrappers ##
 		#########################
 
+    # Public : Returns all the budgets found in the specified account
+		#
+		# Author:: dmitrii@webstreak.com
+		#
+		# === Parameters
+		# budget_ids
+		#
+		# === Examples
+		#   campaign_management_service.get_campaigns_by_account_id(1)
+		#   # => Array[BingAdsApi::Campaign]
+		#   will return all budgets in the specified accunt if no budget_ids provided
+		#
+		# Returns:: Array of BingAdsApi::Budget
+		#
+		# Raises:: exception
+		def update_budgets(budgets)
+      budgets.map!{ |budget| budget.to_hash(:camelcase) }
+			response = call(:update_budgets,
+				{ budgets: { budget: budgets  } } )
+			response_hash = get_response_hash(response, __method__)
+
+      # Checks if there are partial errors in the request
+			if response_hash[:partial_errors].key?(:batch_error)
+				partial_errors = BingAdsApi::PartialErrors.new(
+					response_hash[:partial_errors])
+				response_hash[:partial_errors] = partial_errors
+			else
+				response_hash.delete(:partial_errors)
+			end
+
+			return response_hash
+
+		end
+
+    # Public : Updates budgets
+		#
+		# Author:: dmitrii@webstreak.com
+		#
+		# === Parameters
+		# Array of BingAdsApi::Budget
+		#
+		# === Examples
+		#   campaign_management_service.update_budgets([BingAdsApi::Budget])
+		#   will return all budgets in the specified accunt if no budget_ids provided
+		#
+		# Returns:: Array of BingAdsApi::Budget
+		#
+		# Raises:: exception
+		def get_budgets_by_ids(budget_ids)
+			response = call(:get_budgets_by_ids,
+				{ budget_ids: budget_ids })
+			response_hash = get_response_hash(response, __method__)
+			response_budgets = [response_hash[:budgets][:budget]].flatten.compact
+			budgets = response_budgets.map do |budget_hash|
+				BingAdsApi::Budget.new(budget_hash)
+			end
+			return budgets
+		end
+
+    # Public : Returns all the campaigns found in the specified account
+		#
+		# Author:: dmitrii@webstreak.com
+		#
+		# === Parameters
+		# budget_id
+		#
+		# === Examples
+		#   campaign_management_service.get_campaign_ids_by_budget_ids_id(1)
+		#   # => Array[1,2,3]
+		#
+		# Returns:: Array of Campaing ids
+		#
+		# Raises:: exception
+		def get_campaign_ids_by_budget_ids(budget_ids)
+			response = call(:get_campaign_ids_by_budget_ids,
+			  { budget_ids: {"ins1:long" => budget_ids } } )
+			response_hash = get_response_hash(response, __method__)
+      begin
+			  campaign_ids = response_hash[:campaign_id_collection][:id_collection][:ids][:long]
+      rescue
+        campaign_ids = []
+      end
+			return campaign_ids
+		end
+
+
+
 		# Public : Returns all the campaigns found in the specified account
 		#
 		# Author:: jlopezn@neonline.cl
@@ -102,7 +189,51 @@ module BingAdsApi
 			return get_response_hash(response, __method__)
 		end
 
+    # Public : Adds a target to the specified account
+		#
+		# Author:: webstreak@webstreak.com
+		#
+		# === Parameters
+		# account_id - account who will own the newly campaigns
+		# targets - An array of BingAdsApi::Target
+		#
 
+    def add_targets_to_library(account_id, targets)
+      ts = []
+      if targets.is_a? Array
+				ts = targets.map{ |target| target.to_hash(:camelcase) }
+			elsif targets.is_a? BingAdsApi::Target
+				ts = targets.to_hash
+			else
+				raise "targets must be an array of BingAdsApi::Targets"
+			end
+      message = {
+        :account_id => account_id,
+        :targets => {:target => ts}
+      }
+      response = call(:add_targets_to_library, message)
+      return get_response_hash(response, __method__)
+    end
+
+    # Public : Adds a target to the specified campaign
+		#
+		# Author:: webstreak@webstreak.com
+		#
+		# === Parameters
+		# account_id - account who will own the newly campaigns
+		# target_id - ID of the target
+		# campaign_id - ID of the campaign
+		#
+
+    def set_target_to_campaign(account_id, target_id, campaign_id)
+      message = {
+        account_id: account_id,
+        campaign_id: campaign_id,
+        target_id: target_id
+      }
+      response = call(:set_target_to_campaign, message)
+      return get_response_hash(response, __method__)
+    end
 		# Public : Updates on or more campaigns for the specified account
 		#
 		# Author:: jlopezn@neonline.cl
@@ -161,6 +292,30 @@ module BingAdsApi
 			response = call(:delete_campaigns, message)
 			return get_response_hash(response, __method__)
 		end
+
+    # Public : Returns all the ad groups that belongs to the
+		# specified campaign
+		#
+		# Author:: dmitrii@webstreak.com
+		#
+		# === Parameters
+		# campaign_id   - campaign id
+		#
+		# === Examples
+		#   service.get_targets_by_campaign_ids([1,2,3])
+		#   # => Array[Targets]
+		#
+		# Returns:: Array with all the targets present in campaign_id
+		#
+		# Raises:: exception
+		def get_targets_by_campaign_ids(campaign_ids)
+			response = call(:get_targets_by_campaign_ids,
+        :campaign_ids => {"ins1:long" => campaign_ids})
+			response_hash = get_response_hash(response, __method__)
+      targets = [response_hash[:targets][:target]]
+			return extract_targets(targets)
+		end
+
 
 
 		# Public : Returns all the ad groups that belongs to the
@@ -285,6 +440,31 @@ module BingAdsApi
 			return get_response_hash(response, __method__)
 		end
 
+		# Public : Delete one or more ad_groups on the specified account
+		#
+		# Author:: dmitrii@webstreak.com
+		#
+		# === Parameters
+		# account_id - account that owns the campaigns
+		# campaign_id - campaign that owns the adgroups
+		# ad_groups - ad_groups to be deleted
+		# === Examples
+		#   service.delete_ad_groups(1, [1,2,3])
+		#   # =>  true
+		#
+		# Returns:: boolean. true if the delete was successful. false otherwise
+		#
+		# Raises:: exception
+		def delete_ad_groups(campaign_id, ad_group_ids)
+			message = {
+				:campaign_id => campaign_id,
+				:ad_group_ids => {"ins1:long" => ad_group_ids}
+			}
+			response = call(:delete_ad_groups, message)
+			return get_response_hash(response, __method__)
+		end
+
+
 
 		# Public : Obtains all the ads associated to the specified ad group
 		#
@@ -300,9 +480,9 @@ module BingAdsApi
 		# Returns:: An array of BingAdsApi::Ad
 		#
 		# Raises:: exception
-		def get_ads_by_ad_group_id(ad_group_id)
+		def get_ads_by_ad_group_id(ad_group_id, ad_type)
 			response = call(:get_ads_by_ad_group_id,
-				{ad_group_id: ad_group_id})
+				{ad_group_id: ad_group_id, ad_types: { ad_type: ad_type } } )
 			response_hash = get_response_hash(response, __method__)
 			response_ads = [response_hash[:ads][:ad]].flatten.compact
 			ads = response_ads.map { |ad_hash| initialize_ad(ad_hash) }
@@ -441,6 +621,31 @@ module BingAdsApi
 
 			return response_hash
 		end
+    
+    # Public : Delete one or more ads on the specified adgroup
+		#
+		# Author:: dmitrii@webstreak.com
+		#
+		# === Parameters
+		# ad_group_id - long with the ad group id
+		# ad_ids - array of BingAdsApi::Ad subclasses instances to update
+		# === Examples
+		#   service.delete_ads(1, [1,2,3])
+		#   # =>  true
+		#
+		# Returns:: boolean. true if the delete was successful. false otherwise
+		#
+		# Raises:: exception
+		def delete_ads(ad_group_id, ad_ids)
+			message = {
+				:ad_group_id => ad_group_id,
+				:ad_ids => {"ins1:long" => ad_ids}
+			}
+			response = call(:delete_ads, message)
+			return get_response_hash(response, __method__)
+		end
+
+
 
 
 		# Public: Obtains all the keywords associated to the specified ad group
@@ -594,6 +799,30 @@ module BingAdsApi
 			return response_hash
 		end
 
+    # Public : Delete one or more keywords on the specified adgroup
+		#
+		# Author:: dmitrii@webstreak.com
+		#
+		# === Parameters
+		# ad_group_id - long with the ad group id
+		# keywords_ids - array of BingAdsApi::Ad subclasses instances to update
+		# === Examples
+		#   service.delete_keywords(1, [1,2,3])
+		#   # =>  true
+		#
+		# Returns:: boolean. true if the delete was successful. false otherwise
+		#
+		# Raises:: exception
+		def delete_keywords(ad_group_id, keyword_ids)
+			message = {
+				:ad_group_id => ad_group_id,
+				:keyword_ids => {"ins1:long" => keyword_ids}
+			}
+			response = call(:delete_keywords, message)
+			return get_response_hash(response, __method__)
+		end
+
+
 		private
 			def get_service_name
 				"campaign_management"
@@ -627,6 +856,75 @@ module BingAdsApi
 				end
 				return ad
 			end
+
+      def extract_targets(targets)
+        location_targets = []
+        return location_targets if targets.blank?
+        targets.each do |target|
+          if target[:location].present?
+            city_target = extract_city_target(target[:location])
+            radius_target = extract_radius_target(target[:location])
+            postal_code_target = extract_postal_code_target(target[:location])
+            location_target = BingAdsApi::LocationTarget.new(
+              id: target[:id],
+              city_target: city_target,
+              radius_target: radius_target,
+              postal_code_target: postal_code_target
+            )
+            location_targets << location_target
+          end
+        end
+        return location_targets
+      end
+
+      def extract_radius_target(target)
+        radius_target = nil
+        return radius_target if target[:radius_target].blank?
+        radius_target_bids = extract_bids(target[:radius_target])
+        if radius_target_bids.present?
+          radius_target = BingAdsApi::RadiusTarget.new(bids: radius_target_bids)
+        end
+        return radius_target
+      end
+
+      def extract_postal_code_target(target)
+        postal_code_target = nil
+        return postal_code_target if target[:postal_code_target].blank?
+        postal_code_target_bids = extract_bids(target[:postal_code_target])
+        if postal_code_target_bids.present?
+          postal_code_target = BingAdsApi::PostalCodeTarget.new(bids: postal_code_target_bids)
+        end
+        return postal_code_target
+      end
+
+
+      def extract_city_target(target)
+        city_target = nil
+        return city_target if target[:city_target].blank?
+        city_target_bids = extract_bids(target[:city_target])
+        if city_target_bids.present?
+          city_target = BingAdsApi::CityTarget.new(bids: city_target)
+        end
+        return city_target
+      end
+
+      def extract_bids(target)
+        bids = []
+        if target[:bids].present?
+          target[:bids].each do |name,bid|
+            case name
+            when :radius_target_bid
+              bids << BingAdsApi::RadiusTargetBid.new(bid)
+            when :city_target_bid
+              bids << BingAdsApi::CityTargetBid.new(bid)
+            when :postal_code_target_bid
+              bids << BingAdsApi::PostalCodeTargetBid.new(bid)
+            end
+          end
+        end
+        return bids
+      end
+
 	end
 
 end

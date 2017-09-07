@@ -9,11 +9,13 @@ wsdl:
   sandbox:
     campaign_management: "https://campaign.api.sandbox.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V10/CampaignManagementService.svc?singleWsdl"
     customer_management: "https://clientcenter.api.sandbox.bingads.microsoft.com/Api/CustomerManagement/v9/CustomerManagementService.svc?singleWsdl"
+    customer_billing: "https://clientcenter.api.sandbox.bingads.microsoft.com/Api/Billing/v11/CustomerBillingService.svc?singleWsdl"
     reporting: "https://api.sandbox.bingads.microsoft.com/Api/Advertiser/Reporting/v9/ReportingService.svc?singleWsdl"
     bulk: "https://bulk.api.sandbox.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V10/BulkService.svc?singleWsdl"
   production:
     campaign_management: "https://campaign.api.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V10/CampaignManagementService.svc?singleWsdl"
     customer_management: "https://clientcenter.api.bingads.microsoft.com/Api/CustomerManagement/v9/CustomerManagementService.svc?singleWsdl"
+    customer_billing: "https://clientcenter.api.sandbox.bingads.microsoft.com/Api/Billing/v11/CustomerBillingService.svc?singleWsdl"
     reporting: "https://api.bingads.microsoft.com/Api/Advertiser/Reporting/v9/ReportingService.svc?singleWsdl"
     bulk: "https://bulk.api.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V10/BulkService.svc?singleWsdl"
 
@@ -182,12 +184,20 @@ constants:
       last_six_months: 'LastSixMonths'
       this_year: 'ThisYear'
       last_year: 'LastYear'
+  # Constansts specific for customer billing management services
+  customer_billing:
+    predicate:
+      field: 'Field'
+      operator: 'Operator'
+      value: 'Value'
   # Constansts specific for campaign management services
   campaign_management:
     budget_limit_type:
       monthly_budget_spend_until_depleted: 'MonthlyBudgetSpendUntilDepleted'
       daily_budget_accelerated: 'DailyBudgetAccelerated'
       daily_budget_standard: 'DailyBudgetStandard'
+    campaign_type:
+      dynamic_search: 'DynamicSearchAds'
     campaign_status:
       active: 'Active'
       paused: 'Paused'
@@ -223,6 +233,7 @@ constants:
       deleted: 'Deleted'
     ad_type:
       text: 'Text'
+      expanded_text: 'ExpandedText'
       image: 'Image'
       mobile: 'Mobile'
       rich_search: 'RichSearch'
@@ -241,6 +252,9 @@ constants:
       content: 'Content'
       exact: 'Exact'
       phrase: 'Phrase'
+    distance_units:
+      miles: 'Miles'
+      kilometers: 'Kilometers'
   # Constants specific for customer management
   customer_management:
     account_life_cycle_statuses:
@@ -556,17 +570,42 @@ constants:
         device_type: "DeviceType"
         keywords: "Keywords"
         language_code: "LanguageCode"
+    budget_summary_report:
+      type: "BudgetSummaryReportRequest"
+      columns:
+        account_name: "AccountName"
+        account_number: "AccountNumber"
+        account_id: "AccountId"
+        campaign_name: "CampaignName"
+        campaign_id: "CampaignId"
+        data: "Date"
+        currency_code: "CurrencyCode"
+        monthly_budget: "MonthlyBudget"
+        daily_spend: "DailySpend"
+        month_to_date_spend: "MonthToDateSpend"
 
 # All data object attribute orderings are here
 orders:
+  customer_billing:
+    predicate:
+      - field
+      - operator
+      - value
   campaign_management:
     ad:
       - device_preference
       - editorial_status
       - forward_compatibility_map
       - id
+      - final_urls
       - status
       - type
+      - final_urls
+      - text
+      - path1
+      - path2
+      - title_part_1
+      - title_part_2
     ad_group:
       - ad_distribution
       - ad_rotation
@@ -582,8 +621,15 @@ orders:
       - network
       - phrase_match_bid
       - pricing_model
+      - search_bid
       - start_date
       - status
+    budget:
+      - amount
+      - association_count
+      - budget_type
+      - id
+      - name
     campaign:
       - budget_type
       - conversion_tracking_enabled
@@ -596,6 +642,7 @@ orders:
       - name
       - status
       - time_zone
+      - campaign_type
     keyword:
       - bid
       - destination_url
@@ -617,11 +664,27 @@ orders:
       - title
     product_ad:
       - promotional_text
+    target:
+       - id
+       - location
     text_ad:
       - destination_url
       - display_url
       - text
       - title
+    expanded_text_ad:
+      - final_urls
+      - text
+      - status
+      - path_1
+      - path_2
+      - title_part_1
+      - title_part_2
+    location_target:
+      - id
+      - city_target
+      - state_target
+      - postal_code_target
   reporting:
     report_request:
       - format

@@ -38,6 +38,7 @@ require 'bing-ads-api/data/reporting/account_performance_report_request'
 require 'bing-ads-api/data/reporting/campaign_performance_report_request'
 require 'bing-ads-api/data/reporting/keyword_performance_report_request'
 require 'bing-ads-api/data/reporting/share_of_voice_report_request'
+require 'bing-ads-api/data/reporting/budget_summary_report_request'
 # require 'bing-ads-api/data/reporting/ad_group_performance_report_request'
 # require 'bing-ads-api/data/reporting/ad_performance_report_request'
 
